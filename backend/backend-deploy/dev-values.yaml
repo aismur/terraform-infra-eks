@@ -1,8 +1,8 @@
-applicationName: "proshop-app-backend"
+applicationName: "comet-shop-app-backend"
 replicaCount: 1
-serviceAccount: "proshop-backend-sa-new1"
+serviceAccount: "comet-shop-backend-sa-new1"
 image:
-  repository: "340924313311.dkr.ecr.us-east-1.amazonaws.com/proshop-app-backend"
+  repository: "650251689864.dkr.ecr.us-east-2.amazonaws.com/comet-shop-app-backend"
   tag: "latest"
   pullPolicy: IfNotPresent
 port: 4000
@@ -12,10 +12,7 @@ service:
   targetPort: 4000
 ingress:
   create: true
-  hostname: shop-redhat-backend-dev.312redhat.com
-  tls:
-    enabled: true
-    secretName: 312redhat-tls-secret
+  hostname: comet-backend.project-x-shop.ca
 appConfig:
   env:
     paginationLimit: 8
