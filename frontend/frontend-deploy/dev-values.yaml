@@ -1,0 +1,16 @@
+applicationName: "comet-shop-app-frontend"
+replicaCount: 1
+image:
+  repository: "650251689864.dkr.ecr.us-east-2.amazonaws.com/comet-shop-app-frontend"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+port: 3000
+env:
+  backendURL: "http://comet-backend.project-x-shop.ca"
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+ingress:
+  create: true
+  hostname: a8a9868c57216436a89c5236edf874e4-1261257187.us-east-2.elb.amazonaws.com

@@ -1,0 +1,34 @@
+applicationName: "comet-shop-app-backend"
+replicaCount: 1
+serviceAccount: "comet-shop-backend-sa-new1"
+image:
+  repository: "650251689864.dkr.ecr.us-east-2.amazonaws.com/comet-shop-app-backend"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+port: 4000
+service:
+  type: ClusterIP
+  port: 4000
+  targetPort: 4000
+ingress:
+  create: true
+  hostname: comet-backend.project-x-shop.ca
+appConfig:
+  env:
+    paginationLimit: 8
+    jwtSecret: "abc123"
+    paypalURL: "https://api-m.sandbox.paypal.com"
+    portNum: 4000
+  secrets:
+  - name: MONGO_URI
+    secretName: cometshopdbcredentials
+    key: mongoURI
+awsSecrets:
+  enabled: true
+  syncSecret:
+    enabled: true
+  secretProviderClassName: "cometshop-backend-aws-secrets"
+  k8sSecretName: "cometshopdbcredentials"
+  awsSecretName: "cometshopdbcredentials"
+  secretKeys:
+  - key: "mongoURI"

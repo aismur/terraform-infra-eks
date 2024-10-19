@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.applicationName }}
+  labels:
+    app: {{ .Values.applicationName }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.applicationName }}
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.applicationName }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount }}
+      containers:
+        - name: {{ .Values.applicationName }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.port }}
+              protocol: TCP
+          env:
+            - name: PAGINATION_LIMIT
+              value: "{{ .Values.appConfig.env.paginationLimit }}"
+            - name: JWT_SECRET
+              value: "{{ .Values.appConfig.env.jwtSecret }}"
+            - name: PAYPAL_API_URL
+              value: "{{ .Values.appConfig.env.paypalURL }}"
+            - name: PORT
+              value: "{{ .Values.appConfig.env.portNum }}"
+            {{- range .Values.appConfig.secrets }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secretName }}
+                  key: {{ .key }}
+            {{- end }}
+          volumeMounts:
+          {{- if .Values.awsSecrets.enabled }}
+          - name: secrets-store-inline
+            mountPath: "/mnt/secrets-store"
+            readOnly: true
+          {{- end }}
+      volumes:
+        {{- if .Values.awsSecrets.enabled }}
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Values.awsSecrets.secretProviderClassName }}
+        {{- end }}
