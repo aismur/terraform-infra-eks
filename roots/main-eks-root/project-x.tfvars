@@ -2,7 +2,7 @@
 cluster_name          = "project-x-dev"
 cluster_version       = "1.29"
 subnet_ids            = ["subnet-01564e4a061c8a1f0", "subnet-074f9c2c0bc4c38c2"]
-service_ipv4_cidr     = "172.31.0.0/16"
+service_ipv4_cidr     = "10.100.0.0/16"
 cluster_tag_name      = "project-x"
 iam_role_name         = "project-x-dev-eks-iam-role"
 cluster_sg_name       = "EKS Cluster Security Group"
