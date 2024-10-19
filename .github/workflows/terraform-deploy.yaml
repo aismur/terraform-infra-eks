@@ -28,6 +28,8 @@ jobs:
       # # Run Terraform commands
       - name: Initialize
         run: terraform init
+      - name: Terraform Validate
+        run: terraform validate
       - name: Plan Infrastructure
         run: terraform plan -input=false -var-file=project-x.tfvars
       - name: Deploy Infrastructure
@@ -62,11 +64,11 @@ jobs:
       # # Login to EKS
       - name: Login to EKS
         run: aws eks update-kubeconfig --region us-east-2 --name project-x-dev
-      # # Install Helm on the CI/CD Runner**
+      # # Install Helm on the CI/CD Runner
       - name: Install Helm
         run: |
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-      # # Install NGINX Ingress Controller using Helm**
+      # # Install NGINX Ingress Controller using Helm
       - name: Install NGINX Ingress Controller
         run: |
           helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
