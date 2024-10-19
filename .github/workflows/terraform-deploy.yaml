@@ -1,7 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
 name: Terraform Deployment Workflow
-
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
@@ -9,14 +8,11 @@ on:
     branches: ["dev"]
   pull_request:
     branches: ["main"]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
-
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -29,86 +25,74 @@ jobs:
       run:
         working-directory: ./roots/main-eks-root/
         shell: bash
-
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - name: Login to AWS
-      uses: aws-actions/configure-aws-credentials@v3
-      with:
-        role-to-assume: ${{ vars.IAM_ROLE }}
-        role-session-name: githubactionssession
-        aws-region: "us-east-2"
+      - name: Login to AWS
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ vars.IAM_ROLE }}
+          role-session-name: githubactionssession
+          aws-region: "us-east-2"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # Run Terraform commands
+      - name: Initialize
+        run: terraform init
+      - name: Plan Infrastructure
+        run: terraform plan -input=false -var-file=project-x.tfvars
+      - name: Deploy Infrastructure
+        run: terraform apply -input=false -auto-approve -var-file=project-x.tfvars
+      - name: Apply permissions in aws-auth for K8s RBAC
+        working-directory: ./eks-module
+        run: |
+          aws eks update-kubeconfig --name project-x-dev --region us-east-2
+          kubectl config current-context
+          kubectl apply -f aws-auth.yaml
+      - name: Login to ECR
+        if: github.ref != 'refs/heads/main'
+        id: login-to-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build, tag, and push Backend docker image to Amazon ECR
+        if: github.ref != 'refs/heads/main'
+        env:
+          REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
+          REPOSITORY: comet-shop-app-backend
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: .
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+      - name: Build, tag, and push Frontend docker image to Amazon ECR
+        if: github.ref != 'refs/heads/main'
+        env:
+          REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
+          REPOSITORY: comet-shop-app-frontend
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: ./frontend/
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+      - name: Login to EKS
+        run: aws eks update-kubeconfig --region us-east-2 --name project-x-dev
+      - name: Deploy Backend to Kubernetes
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: ./backend/
+        run: |
+          helm upgrade --install comet-shop-app-backend backend-deploy \
+          --values ./backend-deploy/dev-values.yaml \
+          --set image.tag="$IMAGE_TAG" \
+          --namespace shop-app --create-namespace
+      - name: Deploy Frontend to Kubernetes
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: ./frontend/
+        run: |
+          helm upgrade --install cometshop-app-frontend frontend-deploy \
+          --values ./frontend-deploy/dev-values.yaml \
+          --set image.tag="$IMAGE_TAG" \
+          --namespace shop-app --create-namespace
+        # - name: Destroy Infrastructure
+        #   run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    # Run Terraform commands
-    - name: Initialize
-      run: terraform init
-
-    - name: Plan Infrastructure
-      run: terraform plan -input=false -var-file=project-x.tfvars
-
-    - name: Deploy Infrastructure
-      run: terraform apply -input=false -auto-approve -var-file=project-x.tfvars
-
-    - name: Apply permissions in aws-auth for K8s RBAC
-      working-directory: ./eks-module
-      run: |
-        aws eks update-kubeconfig --name project-x-dev --region us-east-2
-        kubectl config current-context
-        kubectl apply -f aws-auth.yaml
-
-    - name: Login to ECR
-      if: github.ref != 'refs/heads/main'
-      id: login-to-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-
-    - name: Build, tag, and push Backend docker image to Amazon ECR
-      if: github.ref != 'refs/heads/main'
-      env:
-        REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
-        REPOSITORY: comet-shop-app-backend
-        IMAGE_TAG: ${{ github.sha }}
-      working-directory: .
-      run: |
-        docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-        docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
-    - name: Build, tag, and push Frontend docker image to Amazon ECR
-      if: github.ref != 'refs/heads/main'
-      env:
-        REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
-        REPOSITORY: comet-shop-app-frontend
-        IMAGE_TAG: ${{ github.sha }}
-      working-directory: ./frontend/
-      run: |
-        docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-        docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
-    - name: Login to EKS
-      run: aws eks update-kubeconfig --region us-east-2 --name project-x-dev
-
-    - name: Deploy Backend to Kubernetes
-      env:
-        IMAGE_TAG: ${{ github.sha }}
-      working-directory: ./backend/
-      run: |
-        helm upgrade --install comet-shop-app-backend backend-deploy \
-        --values ./backend-deploy/dev-values.yaml \
-        --set image.tag="$IMAGE_TAG" \
-        --namespace shop-app --create-namespace
-
-    - name: Deploy Frontend to Kubernetes
-      env:
-        IMAGE_TAG: ${{ github.sha }}
-      working-directory: ./frontend/
-      run: |
-        helm upgrade --install cometshop-app-frontend frontend-deploy \
-        --values ./frontend-deploy/dev-values.yaml \
-        --set image.tag="$IMAGE_TAG" \
-        --namespace shop-app --create-namespace
-
-      # - name: Destroy Infrastructure
-      #   run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars
-
+#delete
