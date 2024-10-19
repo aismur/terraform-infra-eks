@@ -95,7 +95,7 @@ jobs:
       working-directory: ./backend/
       run: |
         helm upgrade --install comet-shop-app-backend backend-deploy \
-        --values ./backend/backend-deploy/${ENVIRONMENT_STAGE}-values.yaml \
+        --values ./backend-deploy/dev-values.yaml \
         --set image.tag="$IMAGE_TAG" \
         --namespace shop-app --create-namespace
 
@@ -105,10 +105,9 @@ jobs:
       working-directory: ./frontend/
       run: |
         helm upgrade --install cometshop-app-frontend frontend-deploy \
-        --values ./frontend/frontend-deploy/${ENVIRONMENT_STAGE}-values.yaml \
+        --values ./frontend-deploy/dev-values.yaml \
         --set image.tag="$IMAGE_TAG" \
         --namespace shop-app --create-namespace
-
 
       # - name: Destroy Infrastructure
       #   run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars

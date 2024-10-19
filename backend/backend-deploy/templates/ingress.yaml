@@ -16,10 +16,4 @@ spec:
             name: "{{ .Values.applicationName }}-svc"
             port:
               number: {{ .Values.service.port }}
-  tls:
-  {{- if .Values.ingress.tls.enabled }}
-  - hosts: 
-      - {{ .Values.ingress.hostname }}
-    secretName: {{ .Values.ingress.tls.secretName }}
-  {{- end }}
 {{- end }}

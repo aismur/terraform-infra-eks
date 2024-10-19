@@ -14,4 +14,3 @@ service:
 ingress:
   create: true
   hostname: comet.project-x-shop.ca
-
