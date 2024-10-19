@@ -46,8 +46,6 @@ Use the Terraform configuration provided in this repository to create an EKS clu
     Run the following Terraform commands:
     
     ```bash
-    bash
-    Copy code
     terraform init
     terraform apply -var-file=project-x.tfvars
     
@@ -59,8 +57,6 @@ Use the Terraform configuration provided in this repository to create an EKS clu
 After the EKS cluster is created, update your local Kubernetes configuration to interact with the EKS cluster:
     
     ```bash
-    bash
-    Copy code
     aws eks update-kubeconfig --name <cluster-name> --region <region>
     
     ```
@@ -71,8 +67,6 @@ After the EKS cluster is created, update your local Kubernetes configuration to 
 Run the following command to ensure the Kubernetes cluster is correctly set up:
     
     ```bash
-    bash
-    Copy code
     kubectl get nodes
     
     ```
