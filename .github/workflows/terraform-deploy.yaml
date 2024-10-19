@@ -46,18 +46,18 @@ jobs:
     - name: Initialize
       run: terraform init
 
-    # - name: Plan Infrastructure
-    #   run: terraform plan -input=false -var-file=project-x.tfvars
+    - name: Plan Infrastructure
+      run: terraform plan -input=false -var-file=project-x.tfvars
 
-    # - name: Deploy Infrastructure
-    #   run: terraform apply -input=false -auto-approve -var-file=project-x.tfvars
+    - name: Deploy Infrastructure
+      run: terraform apply -input=false -auto-approve -var-file=project-x.tfvars
 
-    # - name: Apply permissions in aws-auth for K8s RBAC
-    #   working-directory: ./eks-module
-    #   run: |
-    #     aws eks update-kubeconfig --name project-x-dev
-    #     kubectl config current-context
-    #     kubectl apply -f aws-auth.yaml
+    - name: Apply permissions in aws-auth for K8s RBAC
+      working-directory: ./eks-module
+      run: |
+        aws eks update-kubeconfig --name project-x-dev
+        kubectl config current-context
+        kubectl apply -f aws-auth.yaml
 
-    - name: Destroy Infrastructure
-      run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars
+    # - name: Destroy Infrastructure
+    #   run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars
