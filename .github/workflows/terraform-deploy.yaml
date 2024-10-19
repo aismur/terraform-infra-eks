@@ -55,7 +55,7 @@ jobs:
     - name: Apply permissions in aws-auth for K8s RBAC
       working-directory: ./eks-module
       run: |
-        aws eks update-kubeconfig --name project-x-dev
+        aws eks update-kubeconfig --name project-x-dev --region us-east-2
         kubectl config current-context
         kubectl apply -f aws-auth.yaml
 
