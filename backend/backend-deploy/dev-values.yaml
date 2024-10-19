@@ -1,8 +1,8 @@
-applicationName: "comet-shop-app-backend"
+applicationName: "proshop-app-backend"
 replicaCount: 1
-serviceAccount: "comet-shop-backend-sa-new1"
+serviceAccount: "proshop-backend-sa-new1"
 image:
-  repository: "650251689864.dkr.ecr.us-east-2.amazonaws.com/comet-shop-app-backend"
+  repository: "650251689864.dkr.ecr.us-east-2.amazonaws.com/proshop-app-backend"
   tag: "latest"
   pullPolicy: IfNotPresent
 port: 4000
@@ -12,7 +12,10 @@ service:
   targetPort: 4000
 ingress:
   create: true
-  hostname: comet-backend.project-x-shop.ca
+  hostname: proshop-backend.99shop.com
+  tls:
+    enabled: true
+    secretName: proshop-tls-secret
 appConfig:
   env:
     paginationLimit: 8
@@ -20,15 +23,15 @@ appConfig:
     paypalURL: "https://api-m.sandbox.paypal.com"
     portNum: 4000
   secrets:
-  - name: MONGO_URI
-    secretName: cometshopdbcredentials
-    key: mongoURI
+    - name: MONGO_URI
+      secretName: proshopdbcredentials
+      key: mongoURI
 awsSecrets:
   enabled: true
   syncSecret:
     enabled: true
-  secretProviderClassName: "cometshop-backend-aws-secrets"
-  k8sSecretName: "cometshopdbcredentials"
-  awsSecretName: "cometshopdbcredentials"
+  secretProviderClassName: "proshop-backend-aws-secrets"
+  k8sSecretName: "proshopdbcredentials"
+  awsSecretName: "proshopdbcredentials"
   secretKeys:
-  - key: "mongoURI"
+    - key: "mongoURI"

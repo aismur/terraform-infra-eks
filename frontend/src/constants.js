@@ -9,4 +9,4 @@ const getBaseUrl = () => {
     return baseUrl;
 };
 
-export const BASE_URL = getBaseUrl() || "https://shop-redhat-backend-dev.312redhat.com";
+export const BASE_URL = getBaseUrl() || "https://proshop-backend.99shop.com";
