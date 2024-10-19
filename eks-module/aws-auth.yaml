@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2024-05-17T05:23:15Z"
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      rolearn: arn:aws:iam::820444288149:role/workers_iam_role
+      username: system:node:{{EC2PrivateDNSName}}
+    - groups:
+      - system:masters
+      rolearn: arn:aws:iam::820444288149:role/MyAdminRole
+      username: MyAdminRole
+    - groups:
+      - system:masters
+      rolearn: arn:aws:iam::820444288149:role/GitHubActionsCICDrole
+      username: GitHubActionsAppCICDrole
+    - groups:
+      - system:masters
+      rolearn: arn:aws:iam::820444288149:role/GitHubActionsIAMRoleDevTerraform
+      username: GitHubActionsIAMRoleDevTerraform
+  mapUsers: |
+    - groups:
+      - system:masters
+      userarn: arn:aws:iam::820444288149:user/Diana
+      username: admin
+
