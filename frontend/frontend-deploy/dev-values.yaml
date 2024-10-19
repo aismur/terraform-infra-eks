@@ -13,4 +13,4 @@ service:
   targetPort: 3000
 ingress:
   create: true
-  hostname: comet.project-x-shop.ca
+  hostname: a8a9868c57216436a89c5236edf874e4-1261257187.us-east-2.elb.amazonaws.com
