@@ -1,7 +1,7 @@
 name: Terraform Deployment Workflow
 on:
   push:
-    branches: ["main", "dev"]
+    branches: ["dev"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -25,81 +25,93 @@ jobs:
           aws-region: "us-east-2"
       - name: Checkout repository
         uses: actions/checkout@v4
-      # Run Terraform commands
+      # # Run Terraform commands
       - name: Initialize
         run: terraform init
       - name: Plan Infrastructure
         run: terraform plan -input=false -var-file=project-x.tfvars
       - name: Deploy Infrastructure
         run: terraform apply -input=false -auto-approve -var-file=project-x.tfvars
-        #Apply permissions in aws-auth for K8s RBAC 
       # # Login to ECR
-      # - name: Login to ECR
-      #   if: github.ref != 'refs/heads/main'
-      #   id: login-to-ecr
-      #   uses: aws-actions/amazon-ecr-login@v2
-
+      - name: Login to ECR
+        if: github.ref != 'refs/heads/main'
+        id: login-to-ecr
+        uses: aws-actions/amazon-ecr-login@v2
       # # Backend image to ECR
-      # - name: Build, tag, and push Backend docker image to Amazon ECR
-      #   if: github.ref != 'refs/heads/main'
-      #   env:
-      #     REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
-      #     REPOSITORY: proshop-app-backend
-      #     IMAGE_TAG: ${{ github.sha }}
-      #   working-directory: .
-      #   run: |
-      #     docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-      #     docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
+      - name: Build, tag, and push Backend docker image to Amazon ECR
+        if: github.ref != 'refs/heads/main'
+        env:
+          REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
+          REPOSITORY: proshop-app-backend
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: .
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
       # # Frontend image to ECR
-      # - name: Build, tag, and push Frontend docker image to Amazon ECR
-      #   if: github.ref != 'refs/heads/main'
-      #   env:
-      #     REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
-      #     REPOSITORY: comet-shop-app-frontend
-      #     IMAGE_TAG: ${{ github.sha }}
-      #   working-directory: ./frontend/
-      #   run: |
-      #     docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-      #     docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
+      - name: Build, tag, and push Frontend docker image to Amazon ECR
+        if: github.ref != 'refs/heads/main'
+        env:
+          REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
+          REPOSITORY: comet-shop-app-frontend
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: ./frontend/
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
       # # Login to EKS
-      # - name: Login to EKS
-      #   run: aws eks update-kubeconfig --region us-east-2 --name project-x-dev
-
+      - name: Login to EKS
+        run: aws eks update-kubeconfig --region us-east-2 --name project-x-dev
+      # # Install Helm on the CI/CD Runner**
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      # # Install NGINX Ingress Controller using Helm**
+      - name: Install NGINX Ingress Controller
+        run: |
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo update
+          helm install nginx-ingress ingress-nginx/ingress-nginx \
+            --namespace kube-system --create-namespace
+      # # Install the Secrets Store CSI Driver**
+      - name: Install Secrets Store CSI Driver
+        run: |
+          helm repo add csi-secrets-store https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+          helm repo update
+          helm install csi-secrets-store csi-secrets-store/secrets-store-csi-driver --namespace kube-system
       # # Apply Kubernetes file    
-      # - name: Apply Kubernetes YAML File
-      #   working-directory: ./kubernetes-resources/
-      #   run: |
-      #     kubectl apply -f proshop-app-tls-secret.yaml
-
+      - name: Apply Kubernetes YAML File
+        working-directory: ./kubernetes-resources/
+        run: |
+          kubectl apply -f proshop-app-tls-secret.yaml
       # # Deploy Backend to Kubernetes
-      # - name: Deploy Backend to Kubernetes
-      #   env:
-      #     IMAGE_TAG: ${{ github.sha }}
-      #   working-directory: ./backend/
-      #   run: |
-      #     helm upgrade --install proshop-app-backend backend-deploy \
-      #     --values ./backend-deploy/dev-values.yaml \
-      #     --set image.tag="$IMAGE_TAG" \
-      #     --namespace shop-app --create-namespace
-
+      - name: Deploy Backend to Kubernetes
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: ./backend/
+        run: |
+          helm upgrade --install proshop-app-backend backend-deploy \
+          --values ./backend-deploy/dev-values.yaml \
+          --set image.tag="$IMAGE_TAG" \
+          --namespace shop-app --create-namespace
       # # Deploy Frontend to Kubernetes
-      # - name: Deploy Frontend to Kubernetes
-      #   env:
-      #     IMAGE_TAG: ${{ github.sha }}
-      #   working-directory: ./frontend/
-      #   run: |
-      #     helm upgrade --install proshop-app-frontend frontend-deploy \
-      #     --values ./frontend-deploy/dev-values.yaml \
-      #     --set image.tag="$IMAGE_TAG" \
-      #     --namespace shop-app --create-namespace
-      - name: Destroy Infrastructure
-        # - name: Apply permissions in aws-auth for K8s RBAC
-        #   working-directory: ./eks-module
-        #   run: |
-        #     aws eks update-kubeconfig --name project-x-dev --region us-east-2
-        #     kubectl config current-context
-        #     kubectl apply -f aws-auth.yaml
+      - name: Deploy Frontend to Kubernetes
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: ./frontend/
+        run: |
+          helm upgrade --install proshop-app-frontend frontend-deploy \
+          --values ./frontend-deploy/dev-values.yaml \
+          --set image.tag="$IMAGE_TAG" \
+          --namespace shop-app --create-namespace
+      # # Apply permissions in aws-auth for K8s RBAC
+      - name: Apply permissions in aws-auth for K8s RBAC
+        working-directory: ./eks-module
+        run: |
+          aws eks update-kubeconfig --name project-x-dev --region us-east-2
+          kubectl config current-context
+          kubectl apply -f aws-auth.yaml
 
-        run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars
+# Destroy Infrastructure    
+# - name: Destroy Infrastructure
+#   run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars
