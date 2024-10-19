@@ -1,0 +1,37 @@
+applicationName: "proshop-app-backend"
+replicaCount: 1
+serviceAccount: "proshop-backend-sa-new1"
+image:
+  repository: "340924313311.dkr.ecr.us-east-1.amazonaws.com/proshop-app-backend"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+port: 4000
+service:
+  type: ClusterIP
+  port: 4000
+  targetPort: 4000
+ingress:
+  create: true
+  hostname: shop-redhat-backend-dev.312redhat.com
+  tls:
+    enabled: true
+    secretName: 312redhat-tls-secret
+appConfig:
+  env:
+    paginationLimit: 8
+    jwtSecret: "abc123"
+    paypalURL: "https://api-m.sandbox.paypal.com"
+    portNum: 4000
+  secrets:
+  - name: MONGO_URI
+    secretName: cometshopdbcredentials
+    key: mongoURI
+awsSecrets:
+  enabled: true
+  syncSecret:
+    enabled: true
+  secretProviderClassName: "cometshop-backend-aws-secrets"
+  k8sSecretName: "cometshopdbcredentials"
+  awsSecretName: "cometshopdbcredentials"
+  secretKeys:
+  - key: "mongoURI"

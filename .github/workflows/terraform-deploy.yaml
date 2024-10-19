@@ -59,5 +59,54 @@ jobs:
         kubectl config current-context
         kubectl apply -f aws-auth.yaml
 
+    - name: Login to ECR
+      if: github.ref != 'refs/heads/main'
+      id: login-to-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push Backend docker image to Amazon ECR
+      if: github.ref != 'refs/heads/main'
+      env:
+        REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
+        REPOSITORY: comet-shop-app-backend
+        IMAGE_TAG: ${{ github.sha }}
+      working-directory: .
+      run: |
+        docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+        docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+    - name: Build, tag, and push Frontend docker image to Amazon ECR
+      if: github.ref != 'refs/heads/main'
+      env:
+        REGISTRY: ${{ steps.login-to-ecr.outputs.registry }}
+        REPOSITORY: comet-shop-app-frontend
+        IMAGE_TAG: ${{ github.sha }}
+      working-directory: ./frontend/
+      run: |
+        docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+        docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+    - name: Login to EKS
+      run: aws eks update-kubeconfig --region us-east-2 --name project-x-dev
+
+    - name: Deploy Backend to Kubernetes
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        helm upgrade --install comet-shop-app-backend ./backend/backend-deploy \
+        --values ./backend/backend-deploy/${ENVIRONMENT_STAGE}-values.yaml \
+        --set image.tag="$IMAGE_TAG" \
+        --namespace shop-app --create-namespace
+
+    - name: Deploy Frontend to Kubernetes
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        helm upgrade --install cometshop-app-frontend ./frontend/frontend-deploy \
+        --values ./frontend/frontend-deploy/${ENVIRONMENT_STAGE}-values.yaml \
+        --set image.tag="$IMAGE_TAG" \
+        --namespace shop-app --create-namespace
+
+
     # - name: Destroy Infrastructure
     #   run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars
