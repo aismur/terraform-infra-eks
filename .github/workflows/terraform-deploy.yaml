@@ -94,7 +94,7 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       working-directory: ./backend/
       run: |
-        helm upgrade --install comet-shop-app-backend ./backend/backend-deploy \
+        helm upgrade --install comet-shop-app-backend backend-deploy \
         --values ./backend/backend-deploy/${ENVIRONMENT_STAGE}-values.yaml \
         --set image.tag="$IMAGE_TAG" \
         --namespace shop-app --create-namespace
@@ -104,11 +104,12 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       working-directory: ./frontend/
       run: |
-        helm upgrade --install cometshop-app-frontend ./frontend/frontend-deploy \
+        helm upgrade --install cometshop-app-frontend frontend-deploy \
         --values ./frontend/frontend-deploy/${ENVIRONMENT_STAGE}-values.yaml \
         --set image.tag="$IMAGE_TAG" \
         --namespace shop-app --create-namespace
 
 
-    # - name: Destroy Infrastructure
-    #   run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars
+      # - name: Destroy Infrastructure
+      #   run: terraform destroy -input=false -auto-approve -var-file=project-x.tfvars
+
