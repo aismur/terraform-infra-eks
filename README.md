@@ -1,6 +1,8 @@
-# Terraform Deployment Workflow
+# ProShop Ecommerce Platform: Terraform EKS Deployment Workflow
 
-This README provides instructions on how to deploy the **Proshop App** using the **Terraform Deployment Workflow**. It is intended to guide users through the process of deploying the application to AWS using Terraform, ECR, EKS, Kubernetes, and Helm.
+This README provides instructions on how to deploy the **Proshop App** using the **Terraform EKS Deployment Workflow**. It is intended to guide users through the process of deploying the application to AWS using Terraform, ECR, EKS, Kubernetes, and Helm.
+
+![Alt text](image.png)
 
 ## Table of Contents
 
